@@ -71,7 +71,7 @@ const ProductModal = ({ product, isOpen, onClose, icon: Icon }: { product: Produ
         </button>
 
         {/* Image Gallery Side */}
-        <div className="lg:w-1/2 bg-slate-50 relative min-h-[300px] lg:min-h-[500px] flex flex-col items-center justify-center p-8 border-r border-slate-100">
+        <div className="lg:w-1/2 bg-slate-50 relative min-h-[300px] lg:min-h-[500px] flex flex-col items-center justify-center p-4 sm:p-8 border-b lg:border-b-0 lg:border-r border-slate-100">
           {product.youtubeId && imgIndex === 0 ? (
             <div className="w-full h-full relative flex-1">
               <iframe 
@@ -90,7 +90,7 @@ const ProductModal = ({ product, isOpen, onClose, icon: Icon }: { product: Produ
               <img 
                 src={allImages[imgIndex]} 
                 alt={`${product.title} - Image ${imgIndex + 1}`} 
-                className="w-full h-full object-contain max-h-[400px]"
+                className="w-full h-full object-contain max-h-[250px] sm:max-h-[400px]"
               />
             </div>
           )}
@@ -105,16 +105,16 @@ const ProductModal = ({ product, isOpen, onClose, icon: Icon }: { product: Produ
 
           {/* Thumbnail Navigation */}
           {allImages.length > 1 && (
-            <div className="flex gap-2 mt-6 overflow-x-auto pb-2 w-full justify-center">
+            <div className="flex gap-2 mt-4 sm:mt-6 overflow-x-auto pb-2 w-full justify-start md:justify-center px-1 snap-x">
               {allImages.map((img, idx) => (
                 <button
                   key={idx}
                   onClick={() => setImgIndex(idx)}
-                  className={`relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-all ${
+                  className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-all bg-white snap-center ${
                     imgIndex === idx ? 'border-mh-green' : 'border-transparent hover:border-slate-300'
                   }`}
                 >
-                  <img src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+                  <img src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-contain p-1" />
                   {idx === 0 && product.youtubeId && (
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                       <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center text-white">
