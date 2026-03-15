@@ -49,7 +49,7 @@ const Footer: React.FC = () => {
              <h5 className="font-bold text-lg mb-6 text-white">Contact</h5>
              <ul className="space-y-4 text-slate-400">
                 <li>Hawke's Bay, New Zealand</li>
-                <li>info@greendrive.co.nz</li>
+                <li>eric.h@mhenergysolutions.co.nz</li>
                 <li>+64 27 500 7762</li>
                 <li className="pt-4">
                    <span className="inline-block w-3 h-3 bg-mh-green rounded-full mr-2 animate-pulse"></span>
