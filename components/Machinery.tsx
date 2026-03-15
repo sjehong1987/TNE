@@ -11,7 +11,7 @@ const ProductCard = ({ product, onClick, icon: Icon }: { key?: React.Key, produc
       onClick={() => onClick(product)}
       className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100 cursor-pointer overflow-hidden flex flex-col group h-full"
     >
-      <div className="relative h-64 bg-slate-50 p-8 flex items-center justify-center border-b border-slate-100">
+      <div className="relative h-48 sm:h-64 bg-slate-50 p-4 sm:p-8 flex items-center justify-center border-b border-slate-100">
         <img 
           src={product.image} 
           alt={product.title} 
