@@ -71,7 +71,7 @@ const ProductModal = ({ product, isOpen, onClose, icon: Icon }: { product: Produ
         </button>
 
         {/* Image Gallery Side */}
-        <div className="lg:w-1/2 bg-slate-50 relative min-h-[300px] lg:min-h-[500px] flex flex-col items-center justify-center p-4 sm:p-8 border-b lg:border-b-0 lg:border-r border-slate-100">
+        <div className="lg:w-1/2 bg-slate-50 relative h-[55vh] lg:h-auto lg:min-h-[500px] flex flex-col items-center justify-center p-4 sm:p-8 border-b lg:border-b-0 lg:border-r border-slate-100 shrink-0">
           {product.youtubeId && imgIndex === 0 ? (
             <div className="w-full h-full relative flex-1">
               <iframe 
@@ -86,11 +86,11 @@ const ProductModal = ({ product, isOpen, onClose, icon: Icon }: { product: Produ
               ></iframe>
             </div>
           ) : (
-            <div className="w-full h-full relative flex-1 flex items-center justify-center">
+            <div className="w-full relative flex-1 min-h-0 flex items-center justify-center">
               <img 
                 src={allImages[imgIndex]} 
                 alt={`${product.title} - Image ${imgIndex + 1}`} 
-                className="w-full h-full object-contain max-h-[250px] sm:max-h-[400px]"
+                className="w-full h-full object-contain"
               />
             </div>
           )}
@@ -105,7 +105,7 @@ const ProductModal = ({ product, isOpen, onClose, icon: Icon }: { product: Produ
 
           {/* Thumbnail Navigation */}
           {allImages.length > 1 && (
-            <div className="flex gap-2 mt-4 sm:mt-6 overflow-x-auto pb-2 w-full justify-start md:justify-center px-1 snap-x">
+            <div className="flex gap-2 mt-4 sm:mt-6 overflow-x-auto pb-2 w-full justify-start md:justify-center px-1 snap-x shrink-0">
               {allImages.map((img, idx) => (
                 <button
                   key={idx}
@@ -129,7 +129,7 @@ const ProductModal = ({ product, isOpen, onClose, icon: Icon }: { product: Produ
         </div>
 
         {/* Content Side */}
-        <div className="lg:w-1/2 p-8 lg:p-12 flex flex-col">
+        <div className="lg:w-1/2 p-6 sm:p-8 lg:p-12 flex flex-col">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600">
               <Icon className="w-5 h-5" />
