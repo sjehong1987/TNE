@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Send, Phone } from 'lucide-react';
+import { Send, Phone, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { IMAGES } from '../images';
 
 const BookDemo: React.FC = () => {
@@ -11,6 +11,9 @@ const BookDemo: React.FC = () => {
     interest: 'EV Orchard Platform (Lifter)'
   });
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -19,23 +22,55 @@ const BookDemo: React.FC = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitStatus('idle');
     
-    const recipients = "eric.h@greendrivenz.co.nz,ismael.m@greendrivenz.co.nz,noah.s@greendrivenz.co.nz";
-    const subject = `New Inquiry: ${formData.interest} - ${formData.name}`;
-    
-    const body = `Name: ${formData.name}
-Email: ${formData.email}
-Company: ${formData.company}
-Phone: ${formData.phone}
-Machine Interest: ${formData.interest}
+    try {
+      // Web3Forms API를 사용하여 이메일 직접 전송
+      const response = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          // 주의: 여기에 Web3Forms에서 발급받은 Access Key를 입력해야 합니다.
+          access_key: import.meta.env.VITE_WEB3FORMS_ACCESS_KEY || 'YOUR_WEB3FORMS_ACCESS_KEY_HERE', 
+          subject: `New Inquiry: ${formData.interest} - ${formData.name}`,
+          from_name: 'TNE Website Contact Form',
+          Name: formData.name,
+          Email: formData.email,
+          Company: formData.company,
+          Phone: formData.phone,
+          Interest: formData.interest,
+        })
+      });
 
---------------------------------
-Sent from TNE (Terra Nova Electromotive) Website`;
-
-    // Construct mailto link
-    window.location.href = `mailto:${recipients}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      const result = await response.json();
+      
+      if (result.success) {
+        setSubmitStatus('success');
+        setFormData({
+          name: '',
+          email: '',
+          company: '',
+          phone: '',
+          interest: 'EV Orchard Platform (Lifter)'
+        });
+        
+        // 5초 후 성공 메시지 숨기기
+        setTimeout(() => setSubmitStatus('idle'), 5000);
+      } else {
+        setSubmitStatus('error');
+      }
+    } catch (error) {
+      console.error('Error sending email:', error);
+      setSubmitStatus('error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -72,6 +107,20 @@ Sent from TNE (Terra Nova Electromotive) Website`;
               {/* Form Side */}
               <div className="lg:w-1/2 bg-white p-10 md:p-16 lg:rounded-l-[3rem]">
                  <form onSubmit={handleSubmit} className="space-y-6">
+                    {submitStatus === 'success' && (
+                      <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl flex items-center gap-3">
+                        <CheckCircle className="w-5 h-5 text-green-500" />
+                        <p className="font-medium">Thank you! Your message has been sent successfully.</p>
+                      </div>
+                    )}
+
+                    {submitStatus === 'error' && (
+                      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center gap-3">
+                        <AlertCircle className="w-5 h-5 text-red-500" />
+                        <p className="font-medium">Something went wrong. Please try again later.</p>
+                      </div>
+                    )}
+
                     <div>
                        <label className="block text-sm font-bold text-mh-dark mb-2 uppercase tracking-wide">Name</label>
                        <input 
@@ -138,9 +187,22 @@ Sent from TNE (Terra Nova Electromotive) Website`;
                        </select>
                     </div>
 
-                    <button type="submit" className="w-full bg-mh-green text-mh-dark font-bold text-lg py-4 rounded-xl hover:bg-mh-accent transition-colors flex items-center justify-center gap-2 mt-4 shadow-lg hover:shadow-xl transform active:scale-95">
-                       Contact us
-                       <Send className="w-5 h-5" />
+                    <button 
+                      type="submit" 
+                      disabled={isSubmitting}
+                      className="w-full bg-mh-green text-mh-dark font-bold text-lg py-4 rounded-xl hover:bg-mh-accent transition-colors flex items-center justify-center gap-2 mt-4 shadow-lg hover:shadow-xl transform active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+                    >
+                       {isSubmitting ? (
+                         <>
+                           Sending...
+                           <Loader2 className="w-5 h-5 animate-spin" />
+                         </>
+                       ) : (
+                         <>
+                           Contact us
+                           <Send className="w-5 h-5" />
+                         </>
+                       )}
                     </button>
                  </form>
               </div>
