@@ -1,6 +1,6 @@
 import { IMAGES } from '../images';
 import { LucideIcon, Zap, Battery, Sun, Wind } from 'lucide-react';
-import { supabase } from './supabase';
+import { supabase, isSupabaseConnected } from './supabase';
 
 export interface HeroSlide {
   id: number;
@@ -82,8 +82,36 @@ const initialProducts: HeroProduct[] = [
   }
 ];
 
+const LOCAL_STORAGE_SLIDES_KEY = 'tne_hero_slides';
+const LOCAL_STORAGE_PRODUCTS_KEY = 'tne_hero_products';
+
+const getLocalSlides = (): HeroSlide[] => {
+  const stored = localStorage.getItem(LOCAL_STORAGE_SLIDES_KEY);
+  if (stored) {
+    try { return JSON.parse(stored); } catch (e) { return initialSlides; }
+  }
+  return initialSlides;
+};
+
+const saveLocalSlides = (slides: HeroSlide[]) => {
+  localStorage.setItem(LOCAL_STORAGE_SLIDES_KEY, JSON.stringify(slides));
+};
+
+const getLocalProducts = (): HeroProduct[] => {
+  const stored = localStorage.getItem(LOCAL_STORAGE_PRODUCTS_KEY);
+  if (stored) {
+    try { return JSON.parse(stored); } catch (e) { return initialProducts; }
+  }
+  return initialProducts;
+};
+
+const saveLocalProducts = (products: HeroProduct[]) => {
+  localStorage.setItem(LOCAL_STORAGE_PRODUCTS_KEY, JSON.stringify(products));
+};
+
 export const HeroService = {
   getAllSlides: async (): Promise<HeroSlide[]> => {
+    if (!isSupabaseConnected) return getLocalSlides();
     try {
       const { data, error } = await supabase.from('hero_slides').select('*').order('id', { ascending: true });
       if (error) throw error;
@@ -99,17 +127,23 @@ export const HeroService = {
       return data as HeroSlide[];
     } catch (e) {
       console.error("Failed to fetch hero slides", e);
-      return initialSlides;
+      return getLocalSlides();
     }
   },
 
   updateSlide: async (updatedSlide: HeroSlide) => {
     const { id, ...rest } = updatedSlide;
+    if (!isSupabaseConnected) {
+      const slides = getLocalSlides().map(s => s.id === id ? { ...s, ...rest } as HeroSlide : s);
+      saveLocalSlides(slides);
+      return;
+    }
     const { error } = await supabase.from('hero_slides').update(rest).eq('id', id);
     if (error) throw error;
   },
 
   getAllProducts: async (): Promise<HeroProduct[]> => {
+    if (!isSupabaseConnected) return getLocalProducts();
     try {
       const { data, error } = await supabase.from('hero_products').select('*').order('id', { ascending: true });
       if (error) throw error;
@@ -125,12 +159,17 @@ export const HeroService = {
       return data as HeroProduct[];
     } catch (e) {
       console.error("Failed to fetch hero products", e);
-      return initialProducts;
+      return getLocalProducts();
     }
   },
 
   updateProduct: async (updatedProduct: HeroProduct) => {
     const { id, ...rest } = updatedProduct;
+    if (!isSupabaseConnected) {
+      const products = getLocalProducts().map(p => p.id === id ? { ...p, ...rest } as HeroProduct : p);
+      saveLocalProducts(products);
+      return;
+    }
     const { error } = await supabase.from('hero_products').update(rest).eq('id', id);
     if (error) throw error;
   },
@@ -139,6 +178,12 @@ export const HeroService = {
     const slidesToInsert = customSlides || initialSlides;
     const productsToInsert = customProducts || initialProducts;
     
+    if (!isSupabaseConnected) {
+      saveLocalSlides(slidesToInsert);
+      saveLocalProducts(productsToInsert);
+      return;
+    }
+
     await supabase.from('hero_slides').delete().neq('id', 0);
     await supabase.from('hero_products').delete().neq('id', 0);
     

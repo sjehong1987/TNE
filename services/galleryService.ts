@@ -1,5 +1,5 @@
 import { IMAGES } from '../images';
-import { supabase } from './supabase';
+import { supabase, isSupabaseConnected } from './supabase';
 
 export interface GalleryItem {
   id: number;
@@ -82,31 +82,46 @@ const initialGalleryItems: GalleryItem[] = [
   }
 ];
 
+// LocalStorage fallback helpers
+const LOCAL_STORAGE_KEY = 'tne_gallery_items';
+
+const getLocalItems = (): GalleryItem[] => {
+  const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+  if (stored) {
+    try {
+      return JSON.parse(stored);
+    } catch (e) {
+      return initialGalleryItems;
+    }
+  }
+  return initialGalleryItems;
+};
+
+const saveLocalItems = (items: GalleryItem[]) => {
+  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(items));
+};
+
 export const GalleryService = {
-  // Load items from backend or initialize with defaults
   getAllItems: async (): Promise<GalleryItem[]> => {
+    if (!isSupabaseConnected) return getLocalItems();
     try {
       const { data, error } = await supabase.from('gallery').select('*').order('id', { ascending: false });
       if (error) throw error;
-      
       if (!data || data.length === 0) {
-        // If empty, insert initial data without explicit IDs so Postgres sequence works correctly
         const itemsToInsert = initialGalleryItems.map(({ id, ...rest }) => rest);
-        const { data: insertedData, error: insertError } = await supabase
-          .from('gallery')
-          .insert(itemsToInsert)
-          .select();
+        const { data: insertedData, error: insertError } = await supabase.from('gallery').insert(itemsToInsert).select();
         if (insertError) throw insertError;
         return insertedData as GalleryItem[];
       }
       return data as GalleryItem[];
     } catch (e) {
       console.error("Failed to fetch gallery items", e);
-      return initialGalleryItems;
+      return getLocalItems();
     }
   },
 
   getApprovedItems: async (): Promise<GalleryItem[]> => {
+    if (!isSupabaseConnected) return getLocalItems().filter(i => i.status === 'approved');
     try {
       const { data, error } = await supabase.from('gallery').select('*').eq('status', 'approved').order('id', { ascending: false });
       if (error) throw error;
@@ -114,22 +129,31 @@ export const GalleryService = {
       return data as GalleryItem[];
     } catch (e) {
       console.error("Failed to fetch approved gallery items", e);
-      return initialGalleryItems.filter(i => i.status === 'approved');
+      return getLocalItems().filter(i => i.status === 'approved');
     }
   },
 
   getPendingItems: async (): Promise<GalleryItem[]> => {
+    if (!isSupabaseConnected) return getLocalItems().filter(i => i.status === 'pending');
     try {
       const { data, error } = await supabase.from('gallery').select('*').eq('status', 'pending').order('id', { ascending: false });
       if (error) throw error;
       return data as GalleryItem[] || [];
     } catch (e) {
       console.error("Failed to fetch pending gallery items", e);
-      return [];
+      return getLocalItems().filter(i => i.status === 'pending');
     }
   },
 
   addItem: async (item: Omit<GalleryItem, 'id' | 'status'>): Promise<GalleryItem> => {
+    const newItem: GalleryItem = { ...item, id: Date.now(), status: 'pending' };
+    
+    if (!isSupabaseConnected) {
+      const items = getLocalItems();
+      saveLocalItems([newItem, ...items]);
+      return newItem;
+    }
+
     const { data, error } = await supabase
       .from('gallery')
       .insert([{ ...item, status: 'pending' }])
@@ -141,20 +165,32 @@ export const GalleryService = {
   },
 
   approveItem: async (id: number) => {
+    if (!isSupabaseConnected) {
+      const items = getLocalItems().map(item => item.id === id ? { ...item, status: 'approved' as const } : item);
+      saveLocalItems(items);
+      return;
+    }
     const { error } = await supabase.from('gallery').update({ status: 'approved' }).eq('id', id);
     if (error) throw error;
   },
 
   deleteItem: async (id: number) => {
+    if (!isSupabaseConnected) {
+      const items = getLocalItems().filter(item => item.id !== id);
+      saveLocalItems(items);
+      return;
+    }
     const { error } = await supabase.from('gallery').delete().eq('id', id);
     if (error) throw error;
   },
 
   reset: async (customData?: GalleryItem[]) => {
     const dataToInsert = customData || initialGalleryItems;
-    // Delete all
+    if (!isSupabaseConnected) {
+      saveLocalItems(dataToInsert);
+      return;
+    }
     await supabase.from('gallery').delete().neq('id', 0);
-    // Insert new without explicit IDs to prevent sequence conflicts
     const itemsToInsert = dataToInsert.map(({ id, ...rest }) => rest);
     await supabase.from('gallery').insert(itemsToInsert);
   }

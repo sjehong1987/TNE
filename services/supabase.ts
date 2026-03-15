@@ -11,7 +11,9 @@ if (!supabaseUrl.startsWith('http')) {
   supabaseUrl = 'https://placeholder.supabase.co';
 }
 
-if (supabaseUrl === 'https://placeholder.supabase.co') {
+export const isSupabaseConnected = supabaseUrl !== 'https://placeholder.supabase.co';
+
+if (!isSupabaseConnected) {
   console.warn('Supabase credentials missing or invalid. The app will use local fallback data. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your environment variables for production.');
 }
 
