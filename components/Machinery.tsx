@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowUp, Truck, Scan, Check, MousePointerClick, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { ArrowUp, Truck, Scan, Check, MousePointerClick, ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, Maximize } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { MachineItem } from '../types';
 import { ProductService, Product } from '../services/productService';
@@ -96,13 +96,28 @@ const ProductModal = ({ product, isOpen, onClose, icon: Icon }: { product: Produ
                 centerOnInit={true}
                 wheel={{ step: 0.1 }}
               >
-                <TransformComponent wrapperStyle={{ width: "100%", height: "100%" }} contentStyle={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <img 
-                    src={allImages[imgIndex]} 
-                    alt={`${product.title} - Image ${imgIndex + 1}`} 
-                    className="w-full h-full object-contain"
-                  />
-                </TransformComponent>
+                {({ zoomIn, zoomOut, resetTransform }) => (
+                  <React.Fragment>
+                    <div className="absolute bottom-4 right-4 z-30 flex gap-2 bg-white/90 backdrop-blur-sm p-1.5 rounded-xl shadow-md border border-slate-200">
+                      <button onClick={() => zoomIn()} className="p-2 hover:bg-slate-100 rounded-lg text-slate-700 transition-colors" title="Zoom In">
+                        <ZoomIn className="w-5 h-5" />
+                      </button>
+                      <button onClick={() => zoomOut()} className="p-2 hover:bg-slate-100 rounded-lg text-slate-700 transition-colors" title="Zoom Out">
+                        <ZoomOut className="w-5 h-5" />
+                      </button>
+                      <button onClick={() => resetTransform()} className="p-2 hover:bg-slate-100 rounded-lg text-slate-700 transition-colors" title="Reset">
+                        <Maximize className="w-5 h-5" />
+                      </button>
+                    </div>
+                    <TransformComponent wrapperStyle={{ width: "100%", height: "100%" }} contentStyle={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <img 
+                        src={allImages[imgIndex]} 
+                        alt={`${product.title} - Image ${imgIndex + 1}`} 
+                        className="w-full h-full object-contain"
+                      />
+                    </TransformComponent>
+                  </React.Fragment>
+                )}
               </TransformWrapper>
             </div>
           )}
