@@ -3,6 +3,7 @@ import { ArrowUp, Truck, Scan, Check, MousePointerClick, ChevronLeft, ChevronRig
 import { Link } from 'react-router-dom';
 import { MachineItem } from '../types';
 import { ProductService, Product } from '../services/productService';
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 
 // --- Product Card Component ---
 const ProductCard = ({ product, onClick, icon: Icon }: { key?: React.Key, product: Product, onClick: (p: Product) => void, icon: React.ElementType }) => {
@@ -86,12 +87,23 @@ const ProductModal = ({ product, isOpen, onClose, icon: Icon }: { product: Produ
               ></iframe>
             </div>
           ) : (
-            <div className="w-full relative flex-1 min-h-0 flex items-center justify-center">
-              <img 
-                src={allImages[imgIndex]} 
-                alt={`${product.title} - Image ${imgIndex + 1}`} 
-                className="w-full h-full object-contain"
-              />
+            <div className="w-full relative flex-1 min-h-0 flex items-center justify-center overflow-hidden cursor-grab active:cursor-grabbing">
+              <TransformWrapper
+                key={imgIndex}
+                initialScale={1}
+                minScale={1}
+                maxScale={5}
+                centerOnInit={true}
+                wheel={{ step: 0.1 }}
+              >
+                <TransformComponent wrapperStyle={{ width: "100%", height: "100%" }} contentStyle={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <img 
+                    src={allImages[imgIndex]} 
+                    alt={`${product.title} - Image ${imgIndex + 1}`} 
+                    className="w-full h-full object-contain"
+                  />
+                </TransformComponent>
+              </TransformWrapper>
             </div>
           )}
           
