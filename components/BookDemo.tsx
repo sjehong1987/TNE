@@ -39,7 +39,7 @@ const BookDemo: React.FC = () => {
           // 주의: 여기에 Web3Forms에서 발급받은 Access Key를 입력해야 합니다.
           access_key: import.meta.env.VITE_WEB3FORMS_ACCESS_KEY || 'YOUR_WEB3FORMS_ACCESS_KEY_HERE', 
           subject: `New Inquiry: ${formData.interest} - ${formData.name}`,
-          from_name: 'TNE Website Contact Form',
+          from_name: 'COREQ Website Contact Form',
           Name: formData.name,
           Email: formData.email,
           Company: formData.company,
@@ -154,7 +154,7 @@ const BookDemo: React.FC = () => {
                           name="company"
                           value={formData.company}
                           onChange={handleChange}
-                          placeholder="ex) TNE (Terra Nova Electromotive)" 
+                          placeholder="ex) COREQ SOLUTIONS NZ" 
                           className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-mh-green transition-all" 
                        />
                     </div>

@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { GalleryService, GalleryItem } from '../services/galleryService';
 import { ProductService, Product } from '../services/productService';
 import { HeroService, HeroSlide, HeroProduct } from '../services/heroService';
-import { Check, Trash2, RefreshCw, AlertCircle, Lock, LogIn, Plus, Edit2, X, Upload } from 'lucide-react';
+import { Check, Trash2, RefreshCw, AlertCircle, Lock, LogIn, Plus, Edit2, X, Upload, Camera } from 'lucide-react';
+import { useCustomLogo } from '../hooks/useCustomLogo';
+import { IMAGES } from '../images';
+import Logo from '../components/Logo';
 
 const AdminPage: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -14,7 +17,7 @@ const AdminPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'pending' | 'approved'>('pending');
 
   // Product State
-  const [activeSection, setActiveSection] = useState<'gallery' | 'products' | 'hero'>('gallery');
+  const [activeSection, setActiveSection] = useState<'gallery' | 'products' | 'hero' | 'settings'>('gallery');
   const [products, setProducts] = useState<Product[]>([]);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -55,6 +58,22 @@ const AdminPage: React.FC = () => {
     image: '',
     youtubeId: ''
   });
+
+  // Settings State
+  const { customLogo, updateLogo } = useCustomLogo();
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        updateLogo(base64String);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -487,7 +506,82 @@ const AdminPage: React.FC = () => {
           >
             Hero Content
           </button>
+          <button
+            onClick={() => setActiveSection('settings')}
+            className={`px-6 py-2 rounded-lg font-bold text-sm transition-all whitespace-nowrap ${
+              activeSection === 'settings' ? 'bg-white text-mh-dark shadow-sm' : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            Site Settings
+          </button>
         </div>
+
+        {/* --- SETTINGS SECTION --- */}
+        {activeSection === 'settings' && (
+          <>
+            <div className="flex justify-between items-center mb-6">
+               <h2 className="text-xl font-bold text-mh-dark">Site Settings</h2>
+            </div>
+            <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm max-w-2xl">
+              <h3 className="font-bold text-lg text-mh-dark mb-4">Website Logo</h3>
+              <p className="text-slate-500 text-sm mb-6">
+                Upload a custom logo to replace the default one. This will update the logo in the navigation bar and footer.
+              </p>
+              
+              <div className="flex items-center gap-6">
+                <div className="w-48 h-24 bg-slate-100 rounded-lg border border-slate-200 flex items-center justify-center p-4 relative group">
+                  {customLogo || IMAGES.logo ? (
+                    <img 
+                      src={customLogo || IMAGES.logo} 
+                      alt="Current Logo" 
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  ) : (
+                    <Logo dark={true} />
+                  )}
+                  
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
+                    <button 
+                      onClick={() => logoInputRef.current?.click()}
+                      className="bg-white text-mh-dark p-2 rounded-full hover:bg-mh-green transition-colors"
+                      title="Upload new logo"
+                    >
+                      <Camera className="w-4 h-4" />
+                    </button>
+                    {customLogo && (
+                      <button 
+                        onClick={() => updateLogo(null)}
+                        className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors"
+                        title="Remove custom logo"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="flex-1">
+                  <button 
+                    onClick={() => logoInputRef.current?.click()}
+                    className="bg-mh-dark text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-slate-800 transition-colors flex items-center gap-2 mb-2"
+                  >
+                    <Upload className="w-4 h-4" /> Upload Logo
+                  </button>
+                  <p className="text-xs text-slate-400">
+                    Recommended format: PNG with transparent background. Max height: 64px.
+                  </p>
+                  <input 
+                    type="file" 
+                    ref={logoInputRef} 
+                    onChange={handleLogoUpload} 
+                    accept="image/*" 
+                    className="hidden" 
+                  />
+                </div>
+              </div>
+            </div>
+          </>
+        )}
 
         {/* --- HERO SECTION --- */}
         {activeSection === 'hero' && (

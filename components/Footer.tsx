@@ -3,8 +3,11 @@ import { Leaf, Facebook, Instagram, Linkedin, Twitter } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { IMAGES } from '../images';
 import Logo from './Logo';
+import { useCustomLogo } from '../hooks/useCustomLogo';
 
 const Footer: React.FC = () => {
+  const { customLogo } = useCustomLogo();
+
   return (
     <footer className="bg-mh-dark text-white pt-20 pb-10 border-t border-slate-800">
       <div className="container mx-auto px-6">
@@ -12,11 +15,11 @@ const Footer: React.FC = () => {
           
           <div className="col-span-1 md:col-span-2">
             <Link to="/" className="flex items-center gap-2 mb-6">
-               {IMAGES.logo ? (
+               {customLogo || IMAGES.logo ? (
                   <img 
-                    src={IMAGES.logo} 
-                    alt="TNE (Terra Nova Electromotive)" 
-                    className="h-10 w-auto object-contain max-w-[150px]"
+                    src={customLogo || IMAGES.logo} 
+                    alt="COREQ SOLUTIONS NZ" 
+                    className="h-16 w-auto object-contain max-w-[200px]"
                   />
                ) : (
                   <Logo dark={false} />
@@ -60,7 +63,7 @@ const Footer: React.FC = () => {
         </div>
 
         <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center text-slate-500 text-sm">
-           <p>&copy; {new Date().getFullYear()} TNE (Terra Nova Electromotive). All rights reserved.</p>
+           <p>&copy; {new Date().getFullYear()} COREQ SOLUTIONS NZ. All rights reserved.</p>
            <p>Designed for NZ Orchards.</p>
         </div>
       </div>

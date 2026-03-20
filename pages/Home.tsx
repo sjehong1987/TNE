@@ -16,7 +16,7 @@ const Home: React.FC = () => {
               Explore Our Solutions
             </h2>
             <p className="text-slate-600 text-lg">
-              Discover how TNE (Terra Nova Electromotive) is revolutionizing orchard management with sustainable technology.
+              Discover how COREQ SOLUTIONS NZ is revolutionizing orchard management with sustainable technology.
             </p>
           </div>
 

@@ -112,7 +112,7 @@ const GalleryPage: React.FC = () => {
               Field <span className="text-mh-green">Gallery</span>
             </h1>
             <p className="text-slate-600 text-lg max-w-2xl">
-              See how TNE (Terra Nova Electromotive) products are making a difference in the real world. 
+              See how COREQ SOLUTIONS NZ products are making a difference in the real world. 
               Browse stories from our community or share your own experience.
             </p>
           </div>

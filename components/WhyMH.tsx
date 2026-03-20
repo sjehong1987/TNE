@@ -102,7 +102,7 @@ const WhyMH: React.FC = () => {
                             We envision a future where the roar of diesel engines in orchards is replaced by the quiet hum of electric motors.
                          </p>
                          <p className="mt-4 text-slate-300 leading-relaxed text-lg">
-                            TNE (Terra Nova Electromotive) is here to lead that transition, ensuring that the work we do on the land is as clean as the land itself.
+                            COREQ SOLUTIONS NZ is here to lead that transition, ensuring that the work we do on the land is as clean as the land itself.
                          </p>
                       </div>
                   </div>

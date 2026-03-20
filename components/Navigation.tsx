@@ -3,13 +3,14 @@ import { Menu, X, Zap, ChevronDown, Leaf } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { IMAGES } from '../images';
 import Logo from './Logo';
+import { useCustomLogo } from '../hooks/useCustomLogo';
 
 interface NavigationProps {
   scrolled: boolean;
 }
 
 const navItems = [
-  { label: 'Why TNE?', href: '/our-story' },
+  { label: 'Why COREQ?', href: '/our-story' },
   { 
     label: 'Machinery', 
     href: '/machinery',
@@ -38,6 +39,7 @@ const navItems = [
 const Navigation: React.FC<NavigationProps> = ({ scrolled }) => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { customLogo } = useCustomLogo();
 
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/';
@@ -53,11 +55,11 @@ const Navigation: React.FC<NavigationProps> = ({ scrolled }) => {
       <div className="container mx-auto px-6 flex flex-nowrap justify-between items-center">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 group shrink-0">
-          {IMAGES.logo ? (
+          {customLogo || IMAGES.logo ? (
             <img 
-              src={IMAGES.logo} 
-              alt="TNE (Terra Nova Electromotive)" 
-              className="h-10 w-auto object-contain max-w-[150px]"
+              src={customLogo || IMAGES.logo} 
+              alt="COREQ SOLUTIONS NZ" 
+              className="h-16 w-auto object-contain max-w-[200px]"
             />
           ) : (
             <Logo dark={false} />
