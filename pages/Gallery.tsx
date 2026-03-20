@@ -49,7 +49,11 @@ const GalleryPage: React.FC = () => {
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
-        ctx?.drawImage(img, 0, 0, width, height);
+        if (ctx) {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, width, height);
+          ctx.drawImage(img, 0, 0, width, height);
+        }
         callback(canvas.toDataURL('image/jpeg', 0.6));
       };
       img.src = reader.result as string;
