@@ -68,8 +68,41 @@ const AdminPage: React.FC = () => {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        const base64String = reader.result as string;
-        updateLogo(base64String);
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 400;
+          const MAX_HEIGHT = 200;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          
+          try {
+            const resizedBase64 = canvas.toDataURL('image/png');
+            updateLogo(resizedBase64).catch(err => {
+              console.error('Failed to save logo to backend:', err);
+            });
+          } catch (err) {
+            console.error('Failed to save logo:', err);
+            alert('Failed to save logo. The image might be too large even after resizing.');
+          }
+        };
+        img.src = reader.result as string;
       };
       reader.readAsDataURL(file);
     }
