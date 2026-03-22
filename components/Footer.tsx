@@ -56,7 +56,7 @@ const Footer: React.FC = () => {
                 <li>+64 27 500 7762</li>
                 <li className="pt-4">
                    <span className="inline-block w-3 h-3 bg-mh-green rounded-full mr-2 animate-pulse"></span>
-                   24/7 Service Available
+                   Local Service Available
                 </li>
              </ul>
           </div>
