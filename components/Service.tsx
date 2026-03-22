@@ -22,7 +22,7 @@ const Service: React.FC = () => {
                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center text-red-600 mb-6">
                   <Clock className="w-8 h-8" />
                </div>
-               <h3 className="text-xl font-bold text-mh-dark mb-3">24-Hour Promise</h3>
+               <h3 className="text-xl font-bold text-mh-dark mb-3">72-Hour Promise</h3>
                <p className="text-slate-500">Rapid response time. If you stop, we move fast to get you going again.</p>
             </div>
 
