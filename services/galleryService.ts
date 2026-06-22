@@ -102,6 +102,18 @@ const saveLocalItems = (items: GalleryItem[]) => {
   localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(items));
 };
 
+// Helper to parse the packed image strings back into arrays
+const mapSupabaseData = (item: any): GalleryItem => {
+  if (item.image && typeof item.image === 'string' && item.image.includes('|||')) {
+    const imagesArray = item.image.split('|||');
+    return { ...item, image: imagesArray[0], images: imagesArray } as GalleryItem;
+  }
+  if (!item.images) {
+    return { ...item, images: [item.image] } as GalleryItem;
+  }
+  return item as GalleryItem;
+};
+
 export const GalleryService = {
   getAllItems: async (): Promise<GalleryItem[]> => {
     if (!isSupabaseConnected) return getLocalItems();
@@ -109,12 +121,12 @@ export const GalleryService = {
       const { data, error } = await supabase.from('gallery').select('*').order('id', { ascending: false });
       if (error) throw error;
       if (!data || data.length === 0) {
-        const itemsToInsert = initialGalleryItems.map(({ id, ...rest }) => rest);
+        const itemsToInsert = initialGalleryItems.map(({ id, images, ...rest }) => rest);
         const { data: insertedData, error: insertError } = await supabase.from('gallery').insert(itemsToInsert).select();
         if (insertError) throw insertError;
-        return insertedData as GalleryItem[];
+        return (insertedData as any[]).map(mapSupabaseData);
       }
-      return data as GalleryItem[];
+      return (data as any[]).map(mapSupabaseData);
     } catch (e) {
       console.error("Failed to fetch gallery items", e);
       return getLocalItems();
@@ -127,7 +139,7 @@ export const GalleryService = {
       const { data, error } = await supabase.from('gallery').select('*').eq('status', 'approved').order('id', { ascending: false });
       if (error) throw error;
       if (!data || data.length === 0) return initialGalleryItems.filter(i => i.status === 'approved');
-      return data as GalleryItem[];
+      return (data as any[]).map(mapSupabaseData);
     } catch (e) {
       console.error("Failed to fetch approved gallery items", e);
       return getLocalItems().filter(i => i.status === 'approved');
@@ -139,7 +151,7 @@ export const GalleryService = {
     try {
       const { data, error } = await supabase.from('gallery').select('*').eq('status', 'pending').order('id', { ascending: false });
       if (error) throw error;
-      return data as GalleryItem[] || [];
+      return (data as any[] || []).map(mapSupabaseData);
     } catch (e) {
       console.error("Failed to fetch pending gallery items", e);
       return getLocalItems().filter(i => i.status === 'pending');
@@ -155,9 +167,18 @@ export const GalleryService = {
       return newItem;
     }
 
+    // Strip images array if it exists to avoid schema error, or serialize it into image if we want
+    // Here we just remove images field so it doesn't break supabase
+    const { images, ...payloadToInsert } = item;
+    
+    // We can join multiple images with a special delimiter if images is provided
+    if (images && images.length > 0) {
+      payloadToInsert.image = images.join('|||');
+    }
+
     const { data, error } = await supabase
       .from('gallery')
-      .insert([{ ...item, status: 'pending' }])
+      .insert([{ ...payloadToInsert, status: 'pending' }])
       .select()
       .single();
     
@@ -192,7 +213,7 @@ export const GalleryService = {
       return;
     }
     await supabase.from('gallery').delete().neq('id', 0);
-    const itemsToInsert = dataToInsert.map(({ id, ...rest }) => rest);
+    const itemsToInsert = dataToInsert.map(({ id, images, ...rest }) => Object.assign(rest, images && images.length > 0 ? { image: images.join('|||') } : {}));
     await supabase.from('gallery').insert(itemsToInsert);
   }
 };

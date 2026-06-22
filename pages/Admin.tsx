@@ -137,18 +137,33 @@ const AdminPage: React.FC = () => {
 
   // --- Gallery Handlers ---
   const handleApprove = async (id: number) => {
-    await GalleryService.approveItem(id);
-    loadData();
+    try {
+      await GalleryService.approveItem(id);
+      loadData();
+    } catch (err: any) {
+      console.error(err);
+      alert(`Failed to approve item. Error: ${err.message}`);
+    }
   };
 
   const handleDeleteGalleryItem = async (id: number) => {
-    await GalleryService.deleteItem(id);
-    loadData();
+    try {
+      await GalleryService.deleteItem(id);
+      loadData();
+    } catch (err: any) {
+      console.error(err);
+      alert(`Failed to delete item. Error: ${err.message}`);
+    }
   };
 
   const handleResetGallery = async () => {
-    await GalleryService.reset();
-    loadData();
+    try {
+      await GalleryService.reset();
+      loadData();
+    } catch (err: any) {
+      console.error(err);
+      alert(`Failed to reset gallery. Error: ${err.message}`);
+    }
   };
 
   // --- Product Handlers ---
