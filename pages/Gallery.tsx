@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, Upload, MapPin, User, Tag, X } from 'lucide-react';
+import { Camera, Upload, MapPin, User, Tag, X, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { GalleryService, GalleryItem } from '../services/galleryService';
 
 const GalleryPage: React.FC = () => {
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  
+  // Enlarged View Modal State
+  const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   
   useEffect(() => {
     const loadItems = async () => {
@@ -21,7 +25,7 @@ const GalleryPage: React.FC = () => {
     location: '',
     description: '',
     author: '',
-    image: null as File | null
+    images: [] as File[]
   });
 
   const resizeImage = (file: File, callback: (dataUrl: string) => void) => {
@@ -62,23 +66,46 @@ const GalleryPage: React.FC = () => {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      resizeImage(file, (resizedDataUrl) => {
-        setPreviewUrl(resizedDataUrl);
-        setFormData({ ...formData, image: file });
+    if (e.target.files && e.target.files.length > 0) {
+      const files = Array.from(e.target.files);
+      const newFiles: File[] = [];
+      const newPreviews: string[] = [];
+      let processed = 0;
+
+      files.forEach((file) => {
+        resizeImage(file, (resizedDataUrl) => {
+          newPreviews.push(resizedDataUrl);
+          newFiles.push(file);
+          processed++;
+          if (processed === files.length) {
+            setFormData(prev => ({ ...prev, images: [...prev.images, ...newFiles] }));
+            setPreviewUrls(prev => [...prev, ...newPreviews]);
+          }
+        });
       });
     }
+  };
+
+  const removePreview = (index: number) => {
+    setPreviewUrls(prev => prev.filter((_, i) => i !== index));
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.image || !previewUrl) return;
+    if (previewUrls.length === 0) {
+      alert("Please upload at least one image.");
+      return;
+    }
 
     try {
       await GalleryService.addItem({
-        image: previewUrl,
+        image: previewUrls[0],
+        images: previewUrls,
         title: formData.title,
         location: formData.location,
         description: formData.description,
@@ -95,9 +122,9 @@ const GalleryPage: React.FC = () => {
         location: '',
         description: '',
         author: '',
-        image: null
+        images: []
       });
-      setPreviewUrl(null);
+      setPreviewUrls([]);
       
       alert("Thank you! Your photo has been submitted for review. It will appear in the gallery once approved.");
     } catch (error: any) {
@@ -136,14 +163,25 @@ const GalleryPage: React.FC = () => {
           {Array.isArray(items) && items.map((item) => (
             <div key={item.id} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100">
               {/* Image Container */}
-              <div className="relative h-64 overflow-hidden">
+              <div 
+                className="relative h-64 overflow-hidden cursor-pointer bg-slate-100" 
+                onClick={() => {
+                  setSelectedItem(item);
+                  setCurrentImageIndex(0);
+                }}
+              >
                 <img 
                   src={item.image} 
                   alt={item.title} 
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6">
-                  <span className="text-white font-medium flex items-center gap-2">
+                {item.images && item.images.length > 1 && (
+                  <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded backdrop-blur-sm z-10">
+                    1 / {item.images.length}
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6 pointer-events-none">
+                  <span className="text-white font-medium flex items-center gap-2 drop-shadow-md">
                     <MapPin className="w-4 h-4 text-mh-green" />
                     {item.location}
                   </span>
@@ -195,30 +233,38 @@ const GalleryPage: React.FC = () => {
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
               {/* Image Upload Area */}
               <div className="space-y-2">
-                <label className="block text-sm font-bold text-mh-dark">Photo Upload</label>
-                <div className={`border-2 border-dashed rounded-2xl p-8 text-center transition-colors ${previewUrl ? 'border-mh-green bg-mh-green/5' : 'border-slate-300 hover:border-mh-green'}`}>
-                  {previewUrl ? (
-                    <div className="relative">
-                      <img src={previewUrl} alt="Preview" className="max-h-64 mx-auto rounded-lg shadow-md" />
-                      <button 
-                        type="button"
-                        onClick={() => {
-                          setPreviewUrl(null);
-                          setFormData({...formData, image: null});
-                        }}
-                        className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
+                <label className="block text-sm font-bold text-mh-dark">Photo Upload (Multiple Allowed)</label>
+                <div className={`border-2 border-dashed rounded-2xl p-8 text-center transition-colors ${previewUrls.length > 0 ? 'border-mh-green bg-mh-green/5' : 'border-slate-300 hover:border-mh-green'}`}>
+                  {previewUrls.length > 0 ? (
+                    <div className="space-y-4">
+                      <div className="flex flex-wrap gap-4 justify-center">
+                        {previewUrls.map((url, idx) => (
+                           <div key={idx} className="relative group">
+                             <img src={url} alt={`Preview ${idx + 1}`} className="h-32 w-32 object-contain bg-white border border-slate-200 mx-auto rounded-lg shadow-md" />
+                             <button
+                               type="button"
+                               onClick={() => removePreview(idx)}
+                               className="absolute -top-2 -right-2 bg-red-500 text-white p-1.5 rounded-full hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                             >
+                               <X className="w-3 h-3" />
+                             </button>
+                           </div>
+                        ))}
+                      </div>
+                      <label className="inline-flex items-center gap-2 cursor-pointer bg-white border border-slate-200 px-4 py-2 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
+                        <Plus className="w-4 h-4" /> Add More Photos
+                        <input type="file" accept="image/*" multiple onChange={handleFileChange} className="hidden" />
+                      </label>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center gap-2">
+                    <div className="flex flex-col items-center gap-2 relative">
                       <Upload className="w-10 h-10 text-slate-400" />
                       <p className="text-slate-600 font-medium">Click to upload or drag and drop</p>
-                      <p className="text-xs text-slate-400">SVG, PNG, JPG or GIF (max. 5MB)</p>
+                      <p className="text-xs text-slate-400">SVG, PNG, JPG or GIF (max. 5MB). Multiple allowed.</p>
                       <input 
                         type="file" 
                         accept="image/*"
+                        multiple
                         onChange={handleFileChange}
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                         required
@@ -289,6 +335,101 @@ const GalleryPage: React.FC = () => {
                 </p>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Enlarged View Modal */}
+      {selectedItem && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm"
+             onClick={(e) => {
+               if (e.target === e.currentTarget) setSelectedItem(null);
+             }}>
+          <div className="relative w-full max-w-6xl bg-transparent flex flex-col md:flex-row gap-6 max-h-[90vh]">
+            <button 
+              onClick={() => setSelectedItem(null)}
+              className="absolute -top-12 right-0 md:-right-12 text-white hover:text-mh-green transition-colors p-2"
+            >
+              <X className="w-8 h-8" />
+            </button>
+            
+            {/* Image Carousel */}
+            <div className="flex-1 relative flex items-center justify-center bg-black/50 rounded-2xl overflow-hidden aspect-video md:aspect-auto min-h-[400px]">
+              <img 
+                src={(selectedItem.images && selectedItem.images.length > 0) ? selectedItem.images[currentImageIndex] : selectedItem.image} 
+                alt={selectedItem.title} 
+                className="max-w-full max-h-full object-contain"
+              />
+              
+              {selectedItem.images && selectedItem.images.length > 1 && (
+                <>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentImageIndex(prev => prev === 0 ? selectedItem.images!.length - 1 : prev - 1);
+                    }}
+                    className="absolute left-4 bg-black/50 text-white p-3 rounded-full hover:bg-mh-green hover:text-mh-dark transition-all"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </button>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentImageIndex(prev => prev === selectedItem.images!.length - 1 ? 0 : prev + 1);
+                    }}
+                    className="absolute right-4 bg-black/50 text-white p-3 rounded-full hover:bg-mh-green hover:text-mh-dark transition-all"
+                  >
+                    <ChevronRight className="w-6 h-6" />
+                  </button>
+                  <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
+                    {selectedItem.images.map((_, idx) => (
+                      <button 
+                        key={idx}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCurrentImageIndex(idx);
+                        }}
+                        className={`w-2.5 h-2.5 rounded-full transition-all ${idx === currentImageIndex ? 'bg-mh-green w-8' : 'bg-white/50 hover:bg-white'}`}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+            
+            {/* Details Panel */}
+            <div className="w-full md:w-96 bg-white rounded-2xl p-8 flex flex-col shadow-2xl flex-shrink-0 md:max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center gap-2 mb-4 flex-wrap">
+                {selectedItem.tags?.map((tag, idx) => (
+                  <span key={idx} className="text-xs font-semibold bg-slate-100 text-slate-600 px-3 py-1 rounded-md">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+              <h3 className="text-3xl font-bold text-mh-dark mb-4">{selectedItem.title}</h3>
+              <div className="flex items-center gap-2 text-mh-green mb-8 font-medium">
+                <MapPin className="w-5 h-5" />
+                {selectedItem.location}
+              </div>
+              
+              <div className="prose prose-slate flex-1">
+                <p className="text-slate-600 leading-relaxed whitespace-pre-line">{selectedItem.description}</p>
+              </div>
+              
+              <div className="border-t border-slate-100 pt-6 mt-8 flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Author</span>
+                  <div className="flex items-center gap-2 text-mh-dark font-bold">
+                    <User className="w-4 h-4 text-mh-green" />
+                    {selectedItem.author}
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Date</span>
+                  <span className="font-bold text-slate-700">{selectedItem.date}</span>
+                </div>
+              </div>
+            </div>
+            
           </div>
         </div>
       )}

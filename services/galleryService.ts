@@ -3,7 +3,8 @@ import { supabase, isSupabaseConnected } from './supabase';
 
 export interface GalleryItem {
   id: number;
-  image: string;
+  image: string; // Keep this as primary image for backward compatibility
+  images?: string[]; // Multiple images for slideshow
   title: string;
   location: string;
   description: string;
