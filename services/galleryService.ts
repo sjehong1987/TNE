@@ -121,12 +121,15 @@ export const GalleryService = {
       const { data, error } = await supabase.from('gallery').select('*').order('id', { ascending: false });
       if (error) throw error;
       if (!data || data.length === 0) {
-        const itemsToInsert = initialGalleryItems.map(({ id, images, ...rest }) => rest);
+        const itemsToInsert = initialGalleryItems.map(({ id, images, ...rest }) => {
+          delete (rest as any).images;
+          return rest;
+        });
         const { data: insertedData, error: insertError } = await supabase.from('gallery').insert(itemsToInsert).select();
         if (insertError) throw insertError;
-        return (insertedData as any[]).map(mapSupabaseData);
+        return (insertedData || []).map(mapSupabaseData);
       }
-      return (data as any[]).map(mapSupabaseData);
+      return (data || []).map(mapSupabaseData);
     } catch (e) {
       console.error("Failed to fetch gallery items", e);
       return getLocalItems();
@@ -139,7 +142,7 @@ export const GalleryService = {
       const { data, error } = await supabase.from('gallery').select('*').eq('status', 'approved').order('id', { ascending: false });
       if (error) throw error;
       if (!data || data.length === 0) return initialGalleryItems.filter(i => i.status === 'approved');
-      return (data as any[]).map(mapSupabaseData);
+      return (data || []).map(mapSupabaseData);
     } catch (e) {
       console.error("Failed to fetch approved gallery items", e);
       return getLocalItems().filter(i => i.status === 'approved');
@@ -151,7 +154,7 @@ export const GalleryService = {
     try {
       const { data, error } = await supabase.from('gallery').select('*').eq('status', 'pending').order('id', { ascending: false });
       if (error) throw error;
-      return (data as any[] || []).map(mapSupabaseData);
+      return (data || []).map(mapSupabaseData);
     } catch (e) {
       console.error("Failed to fetch pending gallery items", e);
       return getLocalItems().filter(i => i.status === 'pending');
@@ -171,19 +174,29 @@ export const GalleryService = {
     // Here we just remove images field so it doesn't break supabase
     const { images, ...payloadToInsert } = item;
     
+    // Explicitly delete images from payload just in case it sneaked in
+    delete (payloadToInsert as any).images;
+    
     // We can join multiple images with a special delimiter if images is provided
     if (images && images.length > 0) {
       payloadToInsert.image = images.join('|||');
     }
 
-    const { data, error } = await supabase
-      .from('gallery')
-      .insert([{ ...payloadToInsert, status: 'pending' }])
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data as GalleryItem;
+    try {
+      const { data, error } = await supabase
+        .from('gallery')
+        .insert([{ ...payloadToInsert, status: 'pending' }])
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data as GalleryItem;
+    } catch (e: any) {
+      if (e.message?.includes('Failed to fetch')) {
+        throw new Error('서버(Supabase)에 연결할 수 없습니다. Supabase 프로젝트가 일시 중지(Paused)되었는지 확인해주세요.');
+      }
+      throw e;
+    }
   },
 
   approveItem: async (id: number) => {
@@ -192,8 +205,15 @@ export const GalleryService = {
       saveLocalItems(items);
       return;
     }
-    const { error } = await supabase.from('gallery').update({ status: 'approved' }).eq('id', id);
-    if (error) throw error;
+    try {
+      const { error } = await supabase.from('gallery').update({ status: 'approved' }).eq('id', id);
+      if (error) throw error;
+    } catch (e: any) {
+      if (e.message?.includes('Failed to fetch')) {
+        throw new Error('서버(Supabase)에 연결할 수 없습니다. Supabase 프로젝트가 일시 중지(Paused)되었는지 확인해주세요.');
+      }
+      throw e;
+    }
   },
 
   deleteItem: async (id: number) => {
@@ -202,8 +222,15 @@ export const GalleryService = {
       saveLocalItems(items);
       return;
     }
-    const { error } = await supabase.from('gallery').delete().eq('id', id);
-    if (error) throw error;
+    try {
+      const { error } = await supabase.from('gallery').delete().eq('id', id);
+      if (error) throw error;
+    } catch (e: any) {
+      if (e.message?.includes('Failed to fetch')) {
+        throw new Error('서버(Supabase)에 연결할 수 없습니다. Supabase 프로젝트가 일시 중지(Paused)되었는지 확인해주세요.');
+      }
+      throw e;
+    }
   },
 
   reset: async (customData?: GalleryItem[]) => {
@@ -212,8 +239,19 @@ export const GalleryService = {
       saveLocalItems(dataToInsert);
       return;
     }
-    await supabase.from('gallery').delete().neq('id', 0);
-    const itemsToInsert = dataToInsert.map(({ id, images, ...rest }) => Object.assign(rest, images && images.length > 0 ? { image: images.join('|||') } : {}));
-    await supabase.from('gallery').insert(itemsToInsert);
+    try {
+      await supabase.from('gallery').delete().neq('id', 0);
+      const itemsToInsert = dataToInsert.map(({ id, images, ...rest }) => {
+        const item = Object.assign(rest, images && images.length > 0 ? { image: images.join('|||') } : {});
+        delete (item as any).images;
+        return item;
+      });
+      await supabase.from('gallery').insert(itemsToInsert);
+    } catch (e: any) {
+      if (e.message?.includes('Failed to fetch')) {
+        throw new Error('서버(Supabase)에 연결할 수 없습니다. Supabase 프로젝트가 일시 중지(Paused)되었는지 확인해주세요.');
+      }
+      throw e;
+    }
   }
 };

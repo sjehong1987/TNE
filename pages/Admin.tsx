@@ -116,7 +116,7 @@ const AdminPage: React.FC = () => {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'admin112233') {
+    if (password === 'coreq2026') {
       setIsAuthenticated(true);
       setError('');
     } else {
