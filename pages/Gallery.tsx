@@ -65,7 +65,10 @@ const GalleryPage: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+
     if (e.target.files && e.target.files.length > 0) {
       const files = Array.from(e.target.files);
       const newFiles: File[] = [];
@@ -122,10 +125,16 @@ const GalleryPage: React.FC = () => {
     e.preventDefault();
     
     if (previewUrls.length === 0) {
-      alert("Please upload at least one image.");
+      alert("Please upload at least one image or video.");
       return;
     }
 
+    if (!formData.title.trim() || !formData.location.trim() || !formData.description.trim() || !formData.author.trim()) {
+      alert("Please fill in all text fields (Title, Location, Description, Your Name).");
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
       await GalleryService.addItem({
         image: previewUrls[0],
@@ -150,10 +159,16 @@ const GalleryPage: React.FC = () => {
       });
       setPreviewUrls([]);
       
-      alert("Thank you! Your photo has been submitted for review. It will appear in the gallery once approved.");
+      alert("Thank you! Your post has been submitted for review. It will appear in the gallery once approved.");
     } catch (error: any) {
       console.error("Failed to add gallery item:", error);
-      alert(`Failed to upload photo. Error: ${error.message || 'Unknown error'}. If you are in the preview environment, this is expected because the database is not connected.`);
+      if (error.name === 'QuotaExceededError' || error.message?.includes('exceeded the quota')) {
+         alert("File is too large to preview without a database connection. Please use a smaller file or set up Supabase.");
+      } else {
+         alert(`Failed to upload. Error: ${error.message || 'Unknown error'}.`);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -323,7 +338,6 @@ const GalleryPage: React.FC = () => {
                     onChange={(e) => setFormData({...formData, title: e.target.value})}
                     placeholder="e.g., Apple Harvest with SB7500"
                     className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-mh-green focus:ring-2 focus:ring-mh-green/20 outline-none transition-all"
-                    required
                   />
                 </div>
                 <div className="space-y-2">
@@ -334,7 +348,6 @@ const GalleryPage: React.FC = () => {
                     onChange={(e) => setFormData({...formData, location: e.target.value})}
                     placeholder="e.g., Hawke's Bay"
                     className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-mh-green focus:ring-2 focus:ring-mh-green/20 outline-none transition-all"
-                    required
                   />
                 </div>
               </div>
@@ -347,7 +360,6 @@ const GalleryPage: React.FC = () => {
                   placeholder="Tell us about your experience..."
                   rows={4}
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-mh-green focus:ring-2 focus:ring-mh-green/20 outline-none transition-all resize-none"
-                  required
                 />
               </div>
 
@@ -359,16 +371,16 @@ const GalleryPage: React.FC = () => {
                   onChange={(e) => setFormData({...formData, author: e.target.value})}
                   placeholder="John Doe"
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-mh-green focus:ring-2 focus:ring-mh-green/20 outline-none transition-all"
-                  required
                 />
               </div>
 
               <div className="pt-4">
                 <button 
                   type="submit"
-                  className="w-full bg-mh-green text-mh-dark py-4 rounded-xl font-bold text-lg hover:bg-mh-accent transition-all shadow-lg hover:shadow-xl active:scale-95"
+                  disabled={isSubmitting}
+                  className="w-full bg-mh-green text-mh-dark py-4 rounded-xl font-bold text-lg hover:bg-mh-accent transition-all shadow-lg hover:shadow-xl active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  Post to Gallery
+                  {isSubmitting ? 'Uploading...' : 'Post to Gallery'}
                 </button>
                 <p className="text-center text-xs text-slate-400 mt-4">
                   By posting, you agree to share this image and content on our public gallery.
