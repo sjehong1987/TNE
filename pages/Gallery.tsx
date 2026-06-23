@@ -72,16 +72,40 @@ const GalleryPage: React.FC = () => {
       const newPreviews: string[] = [];
       let processed = 0;
 
+      const checkCompletion = () => {
+        processed++;
+        if (processed === files.length) {
+          setFormData(prev => ({ ...prev, images: [...prev.images, ...newFiles] }));
+          setPreviewUrls(prev => [...prev, ...newPreviews]);
+        }
+      };
+
       files.forEach((file) => {
-        resizeImage(file, (resizedDataUrl) => {
-          newPreviews.push(resizedDataUrl);
-          newFiles.push(file);
-          processed++;
-          if (processed === files.length) {
-            setFormData(prev => ({ ...prev, images: [...prev.images, ...newFiles] }));
-            setPreviewUrls(prev => [...prev, ...newPreviews]);
-          }
-        });
+        // Prevent huge files from crashing the data URL converter or database
+        if (file.size > 15 * 1024 * 1024) {
+          alert(`File ${file.name} is too large (max 15MB). Skipping.`);
+          checkCompletion();
+          return;
+        }
+
+        // Skip resize for videos
+        if (file.type.startsWith('video/')) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            if (e.target?.result) {
+              newPreviews.push(e.target.result as string);
+              newFiles.push(file);
+              checkCompletion();
+            }
+          };
+          reader.readAsDataURL(file);
+        } else {
+          resizeImage(file, (resizedDataUrl) => {
+            newPreviews.push(resizedDataUrl);
+            newFiles.push(file);
+            checkCompletion();
+          });
+        }
       });
     }
   };
@@ -162,19 +186,28 @@ const GalleryPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {Array.isArray(items) && items.map((item) => (
             <div key={item.id} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100">
-              {/* Image Container */}
+              {/* Image/Video Container */}
               <div 
-                className="relative h-64 overflow-hidden cursor-pointer bg-slate-100" 
+                className="relative h-64 overflow-hidden cursor-pointer bg-slate-100 flex items-center justify-center" 
                 onClick={() => {
                   setSelectedItem(item);
                   setCurrentImageIndex(0);
                 }}
               >
-                <img 
-                  src={item.image} 
-                  alt={item.title} 
-                  className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
-                />
+                {(item.image && (item.image.startsWith('data:video/') || item.image.match(/\.(mp4|webm|ogg)$/i))) ? (
+                  <video 
+                    src={item.image} 
+                    className="w-full h-full object-contain bg-black transition-transform duration-700 group-hover:scale-105"
+                    muted 
+                    playsInline 
+                  />
+                ) : (
+                  <img 
+                    src={item.image} 
+                    alt={item.title} 
+                    className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
+                  />
+                )}
                 {item.images && item.images.length > 1 && (
                   <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded backdrop-blur-sm z-10">
                     1 / {item.images.length}
@@ -238,9 +271,15 @@ const GalleryPage: React.FC = () => {
                   {previewUrls.length > 0 ? (
                     <div className="space-y-4">
                       <div className="flex flex-wrap gap-4 justify-center">
-                        {previewUrls.map((url, idx) => (
+                        {previewUrls.map((url, idx) => {
+                          const isVideo = url && (url.startsWith('data:video/') || url.match(/\.(mp4|webm|ogg)$/i));
+                          return (
                            <div key={idx} className="relative group">
-                             <img src={url} alt={`Preview ${idx + 1}`} className="h-32 w-32 object-contain bg-white border border-slate-200 mx-auto rounded-lg shadow-md" />
+                             {isVideo ? (
+                               <video src={url} className="h-32 w-32 object-cover bg-black border border-slate-200 mx-auto rounded-lg shadow-md" />
+                             ) : (
+                               <img src={url} alt={`Preview ${idx + 1}`} className="h-32 w-32 object-contain bg-white border border-slate-200 mx-auto rounded-lg shadow-md" />
+                             )}
                              <button
                                type="button"
                                onClick={() => removePreview(idx)}
@@ -249,21 +288,22 @@ const GalleryPage: React.FC = () => {
                                <X className="w-3 h-3" />
                              </button>
                            </div>
-                        ))}
+                          );
+                        })}
                       </div>
                       <label className="inline-flex items-center gap-2 cursor-pointer bg-white border border-slate-200 px-4 py-2 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors shadow-sm">
-                        <Plus className="w-4 h-4" /> Add More Photos
-                        <input type="file" accept="image/*" multiple onChange={handleFileChange} className="hidden" />
+                        <Plus className="w-4 h-4" /> Add More Files
+                        <input type="file" accept="image/*,video/*" multiple onChange={handleFileChange} className="hidden" />
                       </label>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center gap-2 relative">
                       <Upload className="w-10 h-10 text-slate-400" />
                       <p className="text-slate-600 font-medium">Click to upload or drag and drop</p>
-                      <p className="text-xs text-slate-400">SVG, PNG, JPG or GIF (max. 5MB). Multiple allowed.</p>
+                      <p className="text-xs text-slate-400">Images or Videos (max. 10MB recommended). Multiple allowed.</p>
                       <input 
                         type="file" 
-                        accept="image/*"
+                        accept="image/*,video/*"
                         multiple
                         onChange={handleFileChange}
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
@@ -352,13 +392,29 @@ const GalleryPage: React.FC = () => {
               <X className="w-8 h-8" />
             </button>
             
-            {/* Image Carousel */}
+            {/* Image/Video Carousel */}
             <div className="flex-1 relative flex items-center justify-center bg-black/50 rounded-2xl overflow-hidden aspect-video md:aspect-auto min-h-[400px]">
-              <img 
-                src={(selectedItem.images && selectedItem.images.length > 0) ? selectedItem.images[currentImageIndex] : selectedItem.image} 
-                alt={selectedItem.title} 
-                className="max-w-full max-h-full object-contain"
-              />
+              {(() => {
+                const url = (selectedItem.images && selectedItem.images.length > 0) ? selectedItem.images[currentImageIndex] : selectedItem.image;
+                const isVideo = url && (url.startsWith('data:video/') || url.match(/\.(mp4|webm|ogg)$/i));
+                if (isVideo) {
+                  return (
+                    <video 
+                      src={url} 
+                      controls 
+                      className="max-w-full max-h-full object-contain"
+                      autoPlay
+                    />
+                  );
+                }
+                return (
+                  <img 
+                    src={url} 
+                    alt={selectedItem.title} 
+                    className="max-w-full max-h-full object-contain"
+                  />
+                );
+              })()}
               
               {selectedItem.images && selectedItem.images.length > 1 && (
                 <>

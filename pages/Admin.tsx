@@ -755,9 +755,13 @@ const AdminPage: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {Array.isArray(filteredGalleryItems) && filteredGalleryItems.map((item) => (
                   <div key={item.id} className="bg-white rounded-xl overflow-hidden shadow-sm border border-slate-100 flex flex-col">
-                    <div className="relative h-48 bg-slate-100">
-                      <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
-                      <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded backdrop-blur-sm">
+                    <div className="relative h-48 bg-slate-100 flex items-center justify-center">
+                      {(item.image && (item.image.startsWith('data:video/') || item.image.match(/\.(mp4|webm|ogg)$/i))) ? (
+                        <video src={item.image} className="w-full h-full object-cover bg-black" muted playsInline />
+                      ) : (
+                        <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                      )}
+                      <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded backdrop-blur-sm z-10">
                         {item.date}
                       </div>
                     </div>
