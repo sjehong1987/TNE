@@ -22,8 +22,8 @@ const Service: React.FC = () => {
                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center text-red-600 mb-6">
                   <Clock className="w-8 h-8" />
                </div>
-               <h3 className="text-xl font-bold text-mh-dark mb-3">24-Hour Promise</h3>
-               <p className="text-slate-500">Rapid response time. If you stop, we move fast to get you going again.</p>
+               <h3 className="text-xl font-bold text-mh-dark mb-3">On-Site Demonstrations</h3>
+               <p className="text-slate-500">Visit our site anytime to see the equipment in person and request a live demonstration.</p>
             </div>
 
             <div className="bg-white p-8 rounded-[2rem] shadow-sm hover:shadow-xl transition-all hover:-translate-y-2 border border-slate-100">

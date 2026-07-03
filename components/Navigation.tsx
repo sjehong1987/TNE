@@ -153,7 +153,7 @@ const Navigation: React.FC<NavigationProps> = ({ scrolled }) => {
                className="block bg-mh-green text-mh-dark text-center py-4 rounded-xl font-bold text-lg"
                onClick={() => setIsOpen(false)}
              >
-               Book a Free Demo
+               Book a Demo
              </Link>
           </div>
         </div>

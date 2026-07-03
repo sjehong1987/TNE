@@ -119,7 +119,7 @@ const Hero: React.FC = () => {
               to="/book-demo"
               className="w-full sm:w-auto px-8 py-4 bg-mh-green text-mh-dark rounded-full font-bold text-lg hover:bg-mh-accent transition-all transform hover:scale-105 flex items-center justify-center gap-2 group shadow-[0_0_20px_rgba(132,204,22,0.3)]"
             >
-              Book a Free Demo
+              Book a Demo
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>

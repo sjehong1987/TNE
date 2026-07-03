@@ -88,10 +88,10 @@ const BookDemo: React.FC = () => {
               {/* Text Side */}
               <div className="lg:w-1/2 p-10 md:p-16 flex flex-col justify-center">
                  <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-6">
-                    See It on <br/><span className="text-mh-green">Your Land.</span>
+                    See It in <br/><span className="text-mh-green">Action.</span>
                  </h2>
                  <p className="text-slate-300 text-lg mb-8 max-w-md">
-                    We bring the machine to you. Test its agility in your own rows, with your own crew. No cost, no obligation.
+                    Demonstrations are available. Come visit our site anytime to see the equipment in person and request a live demonstration.
                  </p>
                  <div className="flex items-center gap-4 text-white">
                     <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center">
